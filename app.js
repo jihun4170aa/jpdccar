@@ -65,9 +65,15 @@ const carTableBody = document.querySelector("#car-table tbody");
 
 // --- QR에 담을 접속 URL 생성 ---
 // QR을 스캔하면 이 URL로 접속되고, ?vid= 파라미터로 자동 조회된다.
+// QR은 인쇄해 붙이는 용도라 항상 배포(GitHub Pages) 주소를 가리키도록 고정한다.
+// 로컬 테스트로 여기를 비우면("") 현재 열린 주소를 자동으로 사용한다.
+const PROD_BASE_URL = "https://jihun4170aa.github.io/jpdccar/";
+
 function buildQrUrl(id) {
-  const base = location.href.split("?")[0].split("#")[0];
-  return `${base}?vid=${encodeURIComponent(id)}`;
+  const base =
+    PROD_BASE_URL || location.href.split("?")[0].split("#")[0];
+  const sep = base.includes("?") ? "&" : "?";
+  return `${base}${sep}vid=${encodeURIComponent(id)}`;
 }
 
 // --- 스캔/입력 텍스트로 차량 찾기 ---
