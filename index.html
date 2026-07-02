@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>공공임대주택 차량관리 시스템</title>
+    <link rel="stylesheet" href="style.css" />
+    <!-- SheetJS for Excel Parsing -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- QRCode.js for QR Code Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <!-- html5-qrcode for Camera Scanning -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  </head>
+  <body>
+    <div id="app">
+      <!-- 1. 조회 화면 (Launcher) -->
+      <section id="page-search" class="page active">
+        <header class="app-header">
+          <h1>차량 정보 조회</h1>
+          <p>QR 스캔 또는 차량번호를 입력하세요</p>
+        </header>
+        <main class="content">
+          <div class="launcher-container">
+            <button id="btn-qr-scan" class="btn-main-action">
+              <span class="icon">📷</span>
+              <span class="text">QR 스캔 시작</span>
+            </button>
+            <div class="search-panel">
+              <div class="input-group">
+                <input
+                  type="text"
+                  id="input-car-number"
+                  placeholder="차량번호 입력 (예: 12가 3456)"
+                />
+                <button id="btn-search" class="btn-secondary">조회</button>
+              </div>
+            </div>
+          </div>
+        </main>
+        <footer class="app-footer">
+          <button id="btn-go-admin" class="btn-link">
+            관리자 페이지로 이동
+          </button>
+        </footer>
+      </section>
+
+      <!-- 2. 완료 화면 (Result Card) -->
+      <section id="page-result" class="page">
+        <header class="app-header">
+          <h1>조회 결과</h1>
+        </header>
+        <main class="content">
+          <div class="result-card">
+            <div class="result-header">
+              <span class="label">차량번호</span>
+              <h2 id="res-car-number">---</h2>
+            </div>
+            <div class="result-body">
+              <div class="info-row">
+                <span class="label">입주민 성함</span>
+                <span id="res-name" class="value">---</span>
+              </div>
+              <div class="info-row">
+                <span class="label">동/호수</span>
+                <span id="res-address" class="value">---</span>
+              </div>
+              <div class="info-row">
+                <span class="label">차종</span>
+                <span id="res-model" class="value">---</span>
+              </div>
+            </div>
+          </div>
+        </main>
+        <footer class="app-footer">
+          <button id="btn-back-search" class="btn-main-action">
+            다른 차량 스캔하기
+          </button>
+        </footer>
+      </section>
+
+      <!-- 3. 저장 화면 (Admin Upload/Input) -->
+      <section id="page-save" class="page">
+        <header class="app-header">
+          <h1>차량 정보 등록</h1>
+        </header>
+        <main class="content">
+          <div class="save-container">
+            <div class="upload-section">
+              <h3>엑셀 일괄 업로드</h3>
+              <div class="file-drop-zone" id="drop-zone">
+                <span class="icon">📁</span>
+                <p>엑셀 파일을 드래그하거나 클릭하세요</p>
+                <input
+                  type="file"
+                  id="file-upload"
+                  accept=".xlsx, .xls"
+                  hidden
+                />
+              </div>
+              <button id="btn-download-template" class="btn-outline">
+                양식 다운로드
+              </button>
+            </div>
+
+            <div class="divider">또는</div>
+
+            <div class="manual-input-section">
+              <h3>직접 입력</h3>
+              <form id="form-car-input">
+                <div class="input-group">
+                  <label>성함</label>
+                  <input type="text" name="name" required />
+                </div>
+                <div class="input-group">
+                  <label>동/호수</label>
+                  <div class="flex-row">
+                    <input type="text" name="dong" placeholder="동" required />
+                    <input type="text" name="ho" placeholder="호" required />
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label>차종</label>
+                  <input type="text" name="model" />
+                </div>
+                <div class="input-group">
+                  <label>차량번호</label>
+                  <input type="text" name="carNumber" required />
+                </div>
+                <div id="qr-preview-container" class="qr-preview">
+                  <div id="qrcode"></div>
+                  <p class="qr-preview-caption">생성된 QR 코드 미리보기</p>
+                </div>
+                <button type="submit" class="btn-main-action">정보 저장</button>
+              </form>
+            </div>
+          </div>
+        </main>
+        <footer class="app-footer">
+          <button id="btn-back-home" class="btn-link">홈으로 돌아가기</button>
+        </footer>
+      </section>
+
+      <!-- 4. 관리자 페이지 (Data List) -->
+      <section id="page-admin" class="page">
+        <header class="app-header">
+          <h1>차량 관리 리스트</h1>
+        </header>
+        <main class="content">
+          <div class="admin-controls">
+            <input
+              type="text"
+              id="admin-search"
+              placeholder="차량번호/이름 검색..."
+            />
+            <button id="btn-go-save" class="btn-secondary">신규 등록</button>
+          </div>
+          <div class="table-container">
+            <table id="car-table">
+              <thead>
+                <tr>
+                  <th>성함</th>
+                  <th>동/호</th>
+                  <th>차종</th>
+                  <th>차량번호</th>
+                  <th>QR코드 (클릭 시 저장)</th>
+                  <th>관리</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Data will be injected here -->
+              </tbody>
+            </table>
+          </div>
+        </main>
+        <footer class="app-footer">
+          <button id="btn-back-home-admin" class="btn-link">
+            홈으로 돌아가기
+          </button>
+        </footer>
+      </section>
+    </div>
+
+    <!-- QR 스캐너 오버레이 -->
+    <div id="scanner-overlay" class="scanner-overlay" hidden>
+      <div class="scanner-box">
+        <h3>QR 코드 스캔</h3>
+        <div id="reader"></div>
+        <p id="scanner-msg">카메라를 QR 코드에 비춰주세요</p>
+        <button id="btn-close-scanner" class="btn-secondary">취소</button>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
